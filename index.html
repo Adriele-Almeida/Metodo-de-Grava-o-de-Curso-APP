@@ -4,18 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>O Código do Novo Digital - Mapa Mental</title>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@0.263.1/dist/umd/lucide.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: system-ui, -apple-system, sans-serif;
-        }
-    </style>
 </head>
 <body>
     <div id="root"></div>
@@ -51,7 +44,7 @@
                 try {
                     localStorage.setItem('codigoNovoDigital_progress', JSON.stringify(completedItems));
                 } catch (e) {
-                    console.error('Erro ao salvar progresso:', e);
+                    console.error('Erro ao salvar:', e);
                 }
             }, [completedItems]);
 
@@ -70,12 +63,24 @@
                 }));
             };
 
-            const Icon = ({ name, className }) => {
-                const IconComponent = lucide[name];
-                return IconComponent ? React.createElement(IconComponent, { className }) : null;
+            const getProgress = () => {
+                const total = Object.keys(completedItems).length;
+                const completed = Object.values(completedItems).filter(Boolean).length;
+                return total > 0 ? Math.round((completed / total) * 100) : 0;
             };
 
-            const NodeCard = ({ id, title, iconName, children, color, glow }) => {
+            const resetProgress = () => {
+                if (confirm('Tem certeza que deseja resetar todo o progresso?')) {
+                    setCompletedItems({});
+                    try {
+                        localStorage.removeItem('codigoNovoDigital_progress');
+                    } catch (e) {
+                        console.error('Erro ao resetar:', e);
+                    }
+                }
+            };
+
+            const NodeCard = ({ id, title, icon: Icon, children, color, glow }) => {
                 const isExpanded = expandedNodes[id];
                 const isCompleted = completedItems[id];
                 
@@ -89,7 +94,7 @@
                                     onClick={() => toggleNode(id)}
                                     className="flex items-center gap-3 flex-1"
                                 >
-                                    <Icon name={iconName} className="w-6 h-6" />
+                                    <Icon className="w-6 h-6" />
                                     <span className={`font-bold text-lg ${isCompleted ? 'line-through' : ''}`}>{title}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -98,11 +103,11 @@
                                         className={`p-2 rounded-lg transition-all ${isCompleted ? 'bg-green-500/30 text-green-300' : 'bg-gray-700/30 text-gray-400 hover:bg-gray-600/30'}`}
                                         title={isCompleted ? 'Marcar como pendente' : 'Marcar como concluído'}
                                     >
-                                        <Icon name="Check" className="w-5 h-5" />
+                                        <Check className="w-5 h-5" />
                                     </button>
                                     {children && (
                                         <button onClick={() => toggleNode(id)}>
-                                            {isExpanded ? <Icon name="ChevronDown" className="w-5 h-5" /> : <Icon name="ChevronRight" className="w-5 h-5" />}
+                                            {isExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
                                         </button>
                                     )}
                                 </div>
@@ -129,7 +134,7 @@
                                 className={`mt-0.5 p-1 rounded transition-all flex-shrink-0 ${isCompleted ? 'bg-green-500/30 text-green-300' : 'bg-gray-700/30 text-gray-400 hover:bg-gray-600/30'}`}
                                 title={isCompleted ? 'Marcar como pendente' : 'Marcar como concluído'}
                             >
-                                <Icon name="Check" className="w-4 h-4" />
+                                <Check className="w-4 h-4" />
                             </button>
                             <span className="text-cyan-400 font-mono text-sm mt-0.5">{number}.</span>
                             <div className="flex-1">
@@ -145,25 +150,9 @@
                 );
             };
 
-            const getProgress = () => {
-                const total = Object.keys(completedItems).length;
-                const completed = Object.values(completedItems).filter(Boolean).length;
-                return total > 0 ? Math.round((completed / total) * 100) : 0;
-            };
-
-            const resetProgress = () => {
-                if (confirm('Tem certeza que deseja resetar todo o progresso?')) {
-                    setCompletedItems({});
-                    try {
-                        localStorage.removeItem('codigoNovoDigital_progress');
-                    } catch (e) {
-                        console.error('Erro ao resetar progresso:', e);
-                    }
-                }
-            };
-
             return (
                 <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 p-8 text-white font-sans">
+                    {/* Header */}
                     <div className="text-center mb-12">
                         <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
                             O Código do Novo Digital
@@ -171,6 +160,7 @@
                         <div className="h-1 w-64 mx-auto bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 rounded-full"></div>
                         <p className="mt-4 text-cyan-300 text-lg">Mapa Mental Interativo do Método</p>
                         
+                        {/* Progress Bar */}
                         <div className="mt-6 max-w-md mx-auto">
                             <div className="flex items-center justify-between mb-2">
                                 <span className="text-sm text-gray-400">Progresso do Curso</span>
@@ -192,10 +182,11 @@
                     </div>
 
                     <div className="max-w-4xl mx-auto">
+                        {/* Apresentação Pessoal */}
                         <NodeCard
                             id="apresentacao"
                             title="1. Minha Apresentação Pessoal Super Breve"
-                            iconName="Sparkles"
+                            icon={Sparkles}
                             color="bg-gradient-to-r from-purple-900/40 to-pink-900/40 border-purple-500/50"
                             glow="shadow-lg shadow-purple-500/20"
                         >
@@ -235,10 +226,11 @@
                             </div>
                         </NodeCard>
 
+                        {/* Módulo 1 - Claude */}
                         <NodeCard
                             id="modulo1"
                             title="Módulo 1 – Claude"
-                            iconName="Cpu"
+                            icon={Cpu}
                             color="bg-gradient-to-r from-cyan-900/40 to-blue-900/40 border-cyan-500/50"
                             glow="shadow-lg shadow-cyan-500/20"
                         >
@@ -250,10 +242,11 @@
                             <ContentItem id="mod1-6" number="6" text="Preparando artefatos em arquivo HTML" />
                         </NodeCard>
 
+                        {/* Módulo 2 - Gemini */}
                         <NodeCard
                             id="modulo2"
                             title="Módulo 2 – Gemini"
-                            iconName="Sparkles"
+                            icon={Sparkles}
                             color="bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border-blue-500/50"
                             glow="shadow-lg shadow-blue-500/20"
                         >
@@ -264,10 +257,11 @@
                             <ContentItem id="mod2-5" number="5" text="Preparando arquivos html" />
                         </NodeCard>
 
+                        {/* Módulo 3 - Google AI Studio */}
                         <NodeCard
                             id="modulo3"
                             title="Módulo 3 – Google AI Studio"
-                            iconName="Code"
+                            icon={Code}
                             color="bg-gradient-to-r from-indigo-900/40 to-violet-900/40 border-indigo-500/50"
                             glow="shadow-lg shadow-indigo-500/20"
                         >
@@ -285,10 +279,11 @@
                             <ContentItem id="mod3-12" number="12" text="Bônus: app de presente" />
                         </NodeCard>
 
+                        {/* Módulo 4 - ChatGPT */}
                         <NodeCard
                             id="modulo4"
                             title="Módulo 4 – ChatGPT"
-                            iconName="Globe"
+                            icon={Globe}
                             color="bg-gradient-to-r from-violet-900/40 to-purple-900/40 border-violet-500/50"
                             glow="shadow-lg shadow-violet-500/20"
                         >
@@ -298,10 +293,11 @@
                             <ContentItem id="mod4-4" number="4" text="Algo deu errado? Dicas de como resolver" />
                         </NodeCard>
 
+                        {/* Módulo 5 - GitHub */}
                         <NodeCard
                             id="modulo5"
                             title="Módulo 5 – GitHub"
-                            iconName="Code"
+                            icon={Code}
                             color="bg-gradient-to-r from-purple-900/40 to-fuchsia-900/40 border-purple-500/50"
                             glow="shadow-lg shadow-purple-500/20"
                         >
@@ -311,18 +307,20 @@
                             <ContentItem id="mod5-4" number="4" text="Dicas de suporte" />
                         </NodeCard>
 
+                        {/* Finalização */}
                         <NodeCard
                             id="finalizacao"
                             title="Vídeo de Finalização e Agradecimento"
-                            iconName="Gift"
+                            icon={Gift}
                             color="bg-gradient-to-r from-fuchsia-900/40 to-pink-900/40 border-fuchsia-500/50"
                             glow="shadow-lg shadow-fuchsia-500/20"
                         />
 
+                        {/* Material Didático */}
                         <NodeCard
                             id="arsenal"
                             title="Material Didáticos"
-                            iconName="BookOpen"
+                            icon={BookOpen}
                             color="bg-gradient-to-r from-emerald-900/40 to-teal-900/40 border-emerald-500/50"
                             glow="shadow-lg shadow-emerald-500/20"
                         >
@@ -332,10 +330,11 @@
                             </div>
                         </NodeCard>
 
+                        {/* Bônus */}
                         <NodeCard
                             id="bonus"
                             title="Bônus: Como Vender na Kiwify"
-                            iconName="DollarSign"
+                            icon={DollarSign}
                             color="bg-gradient-to-r from-amber-900/40 to-orange-900/40 border-amber-500/50"
                             glow="shadow-lg shadow-amber-500/20"
                         >
@@ -345,6 +344,7 @@
                         </NodeCard>
                     </div>
 
+                    {/* Footer */}
                     <div className="text-center mt-12 text-gray-400 text-sm">
                         <p>Clique nos cards para expandir e explorar o conteúdo</p>
                         <p className="mt-2">✓ Use os botões de check para marcar seu progresso</p>
@@ -354,7 +354,7 @@
         };
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<MindMap />);
+        root.render(React.createElement(MindMap));
     </script>
 </body>
 </html>
