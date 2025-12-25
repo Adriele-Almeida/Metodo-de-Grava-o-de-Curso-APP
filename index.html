@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O Código do Novo Digital - Mapa Mental</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/umd/lucide.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { ChevronDown, ChevronRight, Sparkles, Cpu, Globe, Code, BookOpen, Gift, FileText, DollarSign, Check } = lucide;
+
+        const MindMap = () => {
+            const [expandedNodes, setExpandedNodes] = useState({
+                root: true,
+                apresentacao: false,
+                modulo1: false,
+                modulo2: false,
+                modulo3: false,
+                modulo4: false,
+                modulo5: false,
+                finalizacao: false,
+                arsenal: false,
+                bonus: false
+            });
+
+            const [completedItems, setCompletedItems] = useState(() => {
+                const saved = localStorage.getItem('codigoNovoDigital_progress');
+                return saved ? JSON.parse(saved) : {};
+            });
+
+            useEffect(() => {
+                localStorage.setItem('codigoNovoDigital_progress', JSON.stringify(completedItems));
+            }, [completedItems]);
+
+            const toggleNode = (nodeId) => {
+                setExpandedNodes(prev => ({
+                    ...prev,
+                    [nodeId]: !prev[nodeId]
+                }));
+            };
+
+            const toggleComplete = (itemId, e) => {
+                e.stopPropagation();
+                setCompletedItems(prev => ({
+                    ...prev,
+                    [itemId]: !prev[itemId]
+                }));
+            };
+
+            const NodeCard = ({ id, title, icon: Icon, children, color, glow }) => {
+                const isExpanded = expandedNodes[id];
+                const isCompleted = completedItems[id];
+                
+                return (
+                    <div className="mb-3">
+                        <div
+                            className={`cursor-pointer p-4 rounded-lg border-2 transition-all duration-300 ${color} ${glow} backdrop-blur-sm hover:scale-105 ${isCompleted ? 'opacity-70' : ''}`}
+                        >
+                            <div className="flex items-center justify-between">
+                                <div 
+                                    onClick={() => toggleNode(id)}
+                                    className="flex items-center gap-3 flex-1"
+                                >
+                                    <Icon className="w-6 h-6" />
+                                    <span className={`font-bold text-lg ${isCompleted ? 'line-through' : ''}`}>{title}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={(e) => toggleComplete(id, e)}
+                                        className={`p-2 rounded-lg transition-all ${isCompleted ? 'bg-green-500/30 text-green-300' : 'bg-gray-700/30 text-gray-400 hover:bg-gray-600/30'}`}
+                                        title={isCompleted ? 'Marcar como pendente' : 'Marcar como concluído'}
+                                    >
+                                        <Check className="w-5 h-5" />
+                                    </button>
+                                    {children && (
+                                        <button onClick={() => toggleNode(id)}>
+                                            {isExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {isExpanded && children && (
+                            <div className="ml-8 mt-3 space-y-2 border-l-2 border-cyan-500/30 pl-4">
+                                {children}
+                            </div>
+                        )}
+                    </div>
+                );
+            };
+
+            const ContentItem = ({ id, number, text, notes }) => {
+                const isCompleted = completedItems[id];
+                
+                return (
+                    <div className={`p-3 rounded-lg bg-gradient-to-r from-slate-800/50 to-slate-900/50 border border-cyan-500/20 hover:border-cyan-400/40 transition-all ${isCompleted ? 'opacity-60' : ''}`}>
+                        <div className="flex items-start gap-2">
+                            <button
+                                onClick={(e) => toggleComplete(id, e)}
+                                className={`mt-0.5 p-1 rounded transition-all flex-shrink-0 ${isCompleted ? 'bg-green-500/30 text-green-300' : 'bg-gray-700/30 text-gray-400 hover:bg-gray-600/30'}`}
+                                title={isCompleted ? 'Marcar como pendente' : 'Marcar como concluído'}
+                            >
+                                <Check className="w-4 h-4" />
+                            </button>
+                            <span className="text-cyan-400 font-mono text-sm mt-0.5">{number}.</span>
+                            <div className="flex-1">
+                                <p className={`text-gray-200 ${isCompleted ? 'line-through' : ''}`}>{text}</p>
+                                {notes && notes.map((note, idx) => (
+                                    <div key={idx} className="mt-2 p-2 bg-yellow-500/10 border-l-2 border-yellow-500/50 rounded text-sm text-yellow-200">
+                                        💡 {note}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const getProgress = () => {
+                const total = Object.keys(completedItems).length;
+                const completed = Object.values(completedItems).filter(Boolean).length;
+                return total > 0 ? Math.round((completed / total) * 100) : 0;
+            };
+
+            const resetProgress = () => {
+                if (confirm('Tem certeza que deseja resetar todo o progresso?')) {
+                    setCompletedItems({});
+                    localStorage.removeItem('codigoNovoDigital_progress');
+                }
+            };
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 p-8 text-white font-sans">
+                    {/* Header */}
+                    <div className="text-center mb-12">
+                        <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
+                            O Código do Novo Digital
+                        </h1>
+                        <div className="h-1 w-64 mx-auto bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 rounded-full"></div>
+                        <p className="mt-4 text-cyan-300 text-lg">Mapa Mental Interativo do Método</p>
+                        
+                        {/* Progress Bar */}
+                        <div className="mt-6 max-w-md mx-auto">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm text-gray-400">Progresso do Curso</span>
+                                <span className="text-sm font-bold text-cyan-400">{getProgress()}%</span>
+                            </div>
+                            <div className="w-full bg-gray-700/50 rounded-full h-3 overflow-hidden">
+                                <div 
+                                    className="bg-gradient-to-r from-cyan-500 to-purple-600 h-full transition-all duration-500"
+                                    style={{ width: `${getProgress()}%` }}
+                                ></div>
+                            </div>
+                            <button
+                                onClick={resetProgress}
+                                className="mt-3 text-xs text-gray-500 hover:text-red-400 transition-colors"
+                            >
+                                Resetar Progresso
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="max-w-4xl mx-auto">
+                        {/* Apresentação Pessoal */}
+                        <NodeCard
+                            id="apresentacao"
+                            title="1. Minha Apresentação Pessoal Super Breve"
+                            icon={Sparkles}
+                            color="bg-gradient-to-r from-purple-900/40 to-pink-900/40 border-purple-500/50"
+                            glow="shadow-lg shadow-purple-500/20"
+                        >
+                            <div className="space-y-3">
+                                <div className="p-4 rounded-lg bg-gradient-to-r from-purple-800/30 to-pink-800/30 border border-purple-400/30">
+                                    <h3 className="font-bold text-cyan-300 mb-3">2. Apresentação do Método</h3>
+                                    
+                                    <div className="space-y-3">
+                                        <ContentItem id="apresentacao-1" number="•" text="O que o aluno vai precisar" />
+                                        
+                                        <div className="p-3 rounded-lg bg-slate-800/50 border border-cyan-500/20">
+                                            <p className="text-gray-200 mb-2">E-mail e contas nas plataformas:</p>
+                                            <div className="ml-4 space-y-1 text-cyan-300">
+                                                <p>• Gemini</p>
+                                                <p>• ChatGPT</p>
+                                                <p>• Claude</p>
+                                                <p>• GitHub</p>
+                                                <p>• Google AI Studio</p>
+                                            </div>
+                                        </div>
+
+                                        <ContentItem 
+                                            id="apresentacao-2"
+                                            number="•" 
+                                            text="Se tiver intenção de vender, deve se cadastrar na Kiwify"
+                                        />
+
+                                        <div className="mt-3 p-3 bg-yellow-500/10 border-l-2 border-yellow-500/50 rounded text-sm text-yellow-200">
+                                            💡 Aqui eu dou abertura ao curso com o slide e já apresentando as plataformas.
+                                        </div>
+                                        
+                                        <div className="p-3 bg-yellow-500/10 border-l-2 border-yellow-500/50 rounded text-sm text-yellow-200">
+                                            💡 Deixar os links na descrição
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </NodeCard>
+
+                        {/* Módulo 1 - Claude */}
+                        <NodeCard
+                            id="modulo1"
+                            title="Módulo 1 – Claude"
+                            icon={Cpu}
+                            color="bg-gradient-to-r from-cyan-900/40 to-blue-900/40 border-cyan-500/50"
+                            glow="shadow-lg shadow-cyan-500/20"
+                        >
+                            <ContentItem id="mod1-1" number="1" text="Introdução: o que é e para que serve" />
+                            <ContentItem id="mod1-2" number="2" text="Artefatos: estático vs interativo" />
+                            <ContentItem id="mod1-3" number="3" text="Como criar artefatos" />
+                            <ContentItem id="mod1-4" number="4" text="Como criar artefatos interativos" />
+                            <ContentItem id="mod1-5" number="5" text="Ideias de artefatos" />
+                            <ContentItem id="mod1-6" number="6" text="Preparando artefatos em arquivo HTML" />
+                        </NodeCard>
+
+                        {/* Módulo 2 - Gemini */}
+                        <NodeCard
+                            id="modulo2"
+                            title="Módulo 2 – Gemini"
+                            icon={Sparkles}
+                            color="bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border-blue-500/50"
+                            glow="shadow-lg shadow-blue-500/20"
+                        >
+                            <ContentItem id="mod2-1" number="1" text="Introdução: o que é e para que serve" />
+                            <ContentItem id="mod2-2" number="2" text="Criando app" />
+                            <ContentItem id="mod2-3" number="3" text="Criando sites" />
+                            <ContentItem id="mod2-4" number="4" text="Ideias de app e sites" />
+                            <ContentItem id="mod2-5" number="5" text="Preparando arquivos html" />
+                        </NodeCard>
+
+                        {/* Módulo 3 - Google AI Studio */}
+                        <NodeCard
+                            id="modulo3"
+                            title="Módulo 3 – Google AI Studio"
+                            icon={Code}
+                            color="bg-gradient-to-r from-indigo-900/40 to-violet-900/40 border-indigo-500/50"
+                            glow="shadow-lg shadow-indigo-500/20"
+                        >
+                            <ContentItem id="mod3-1" number="1" text="Introdução: o que é e para que serve" />
+                            <ContentItem id="mod3-2" number="2" text="Chave key Gemini" />
+                            <ContentItem id="mod3-3" number="3" text="Apresentando a plataforma" />
+                            <ContentItem id="mod3-4" number="4" text="Possibilidades" />
+                            <ContentItem id="mod3-5" number="5" text="Criando um app" />
+                            <ContentItem id="mod3-6" number="6" text="Modificando ou personalizando um app" />
+                            <ContentItem id="mod3-7" number="7" text="Duplicando um app" />
+                            <ContentItem id="mod3-8" number="8" text="Preparando os arquivos para html" />
+                            <ContentItem id="mod3-9" number="9" text="Cuidados na hora de vender ou compartilhar os projetos" />
+                            <ContentItem id="mod3-10" number="10" text="Boas práticas" />
+                            <ContentItem id="mod3-11" number="11" text="Dicas de organização" />
+                            <ContentItem id="mod3-12" number="12" text="Bônus: app de presente" />
+                        </NodeCard>
+
+                        {/* Módulo 4 - ChatGPT */}
+                        <NodeCard
+                            id="modulo4"
+                            title="Módulo 4 – ChatGPT"
+                            icon={Globe}
+                            color="bg-gradient-to-r from-violet-900/40 to-purple-900/40 border-violet-500/50"
+                            glow="shadow-lg shadow-violet-500/20"
+                        >
+                            <ContentItem id="mod4-1" number="1" text="Introdução: o que é e para que serve" />
+                            <ContentItem id="mod4-2" number="2" text="Agente GPT Suporte" />
+                            <ContentItem id="mod4-3" number="3" text="Agente GPT refinador de metaprompt" />
+                            <ContentItem id="mod4-4" number="4" text="Algo deu errado? Dicas de como resolver" />
+                        </NodeCard>
+
+                        {/* Módulo 5 - GitHub */}
+                        <NodeCard
+                            id="modulo5"
+                            title="Módulo 5 – GitHub"
+                            icon={Code}
+                            color="bg-gradient-to-r from-purple-900/40 to-fuchsia-900/40 border-purple-500/50"
+                            glow="shadow-lg shadow-purple-500/20"
+                        >
+                            <ContentItem id="mod5-1" number="1" text="Introdução: o que é e para que serve" />
+                            <ContentItem id="mod5-2" number="2" text="Como subir um site ou app" />
+                            <ContentItem id="mod5-3" number="3" text="Boas práticas" />
+                            <ContentItem id="mod5-4" number="4" text="Dicas de suporte" />
+                        </NodeCard>
+
+                        {/* Finalização */}
+                        <NodeCard
+                            id="finalizacao"
+                            title="Vídeo de Finalização e Agradecimento"
+                            icon={Gift}
+                            color="bg-gradient-to-r from-fuchsia-900/40 to-pink-900/40 border-fuchsia-500/50"
+                            glow="shadow-lg shadow-fuchsia-500/20"
+                        />
+
+                        {/* Material Didático */}
+                        <NodeCard
+                            id="arsenal"
+                            title="Material Didáticos"
+                            icon={BookOpen}
+                            color="bg-gradient-to-r from-emerald-900/40 to-teal-900/40 border-emerald-500/50"
+                            glow="shadow-lg shadow-emerald-500/20"
+                        >
+                            <div className="p-4 rounded-lg bg-gradient-to-r from-emerald-800/30 to-teal-800/30 border border-emerald-400/30">
+                                <h3 className="font-bold text-cyan-300 mb-2">Arsenal: Guias com passo a passo</h3>
+                                <p className="text-gray-300 italic">Arquivos em PDF ou links como app interativo?</p>
+                            </div>
+                        </NodeCard>
+
+                        {/* Bônus */}
+                        <NodeCard
+                            id="bonus"
+                            title="Bônus: Como Vender na Kiwify"
+                            icon={DollarSign}
+                            color="bg-gradient-to-r from-amber-900/40 to-orange-900/40 border-amber-500/50"
+                            glow="shadow-lg shadow-amber-500/20"
+                        >
+                            <div className="p-4 rounded-lg bg-gradient-to-r from-amber-800/30 to-orange-800/30 border border-amber-400/30">
+                                <p className="text-gray-300 italic">PDF ou interativo?</p>
+                            </div>
+                        </NodeCard>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="text-center mt-12 text-gray-400 text-sm">
+                        <p>Clique nos cards para expandir e explorar o conteúdo</p>
+                        <p className="mt-2">✓ Use os botões de check para marcar seu progresso</p>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<MindMap />, document.getElementById('root'));
+    </script>
+</body>
+</html>
